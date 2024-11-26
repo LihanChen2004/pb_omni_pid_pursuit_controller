@@ -1,12 +1,5 @@
 #include "pb_omni_pid_pursuit_controller/omni_pid_pursuit_controller.hpp"
 
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "nav2_core/exceptions.hpp"
 #include "nav2_util/geometry_utils.hpp"
 #include "nav2_util/node_utils.hpp"
@@ -134,10 +127,10 @@ void OmniPidPursuitController::configure(
   global_path_pub_ = node->create_publisher<nav_msgs::msg::Path>("local_plan", 1);
   carrot_pub_ = node->create_publisher<geometry_msgs::msg::PointStamped>("lookahead_point", 1);
 
-  move_pid = std::make_shared<PID>(
+  move_pid_ = std::make_shared<PID>(
     control_duration_, max_translation_speed_, min_translation_speed_, translation_kp_,
     translation_kd_, translation_ki_);
-  heading_pid = std::make_shared<PID>(
+  heading_pid_ = std::make_shared<PID>(
     control_duration_, max_rotation_speed_, min_rotation_speed_, rotation_kp_, rotation_kd_,
     rotation_ki_);
 }
@@ -209,8 +202,8 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
     }
   }
 
-  auto lin_vel = move_pid->calculate(lin_dist, 0);
-  auto angular_vel = heading_pid->calculate(angle_to_goal, 0);
+  auto lin_vel = move_pid_->calculate(lin_dist, 0);
+  auto angular_vel = heading_pid_->calculate(angle_to_goal, 0);
 
   applyApproachVelocityScaling(transformed_plan, lin_vel);
 
@@ -264,7 +257,7 @@ nav_msgs::msg::Path OmniPidPursuitController::transformGlobalPlan(
     [&](const auto & pose) { return euclidean_distance(pose, robot_pose) > max_costmap_extent; });
 
   // Lambda to transform a PoseStamped from global frame to local
-  auto transformGlobalPoseToLocal = [&](const auto & global_plan_pose) {
+  auto transform_global_pose_to_local = [&](const auto & global_plan_pose) {
     geometry_msgs::msg::PoseStamped stamped_pose, transformed_pose;
     stamped_pose.header.frame_id = global_plan_.header.frame_id;
     stamped_pose.header.stamp = robot_pose.header.stamp;
@@ -278,7 +271,7 @@ nav_msgs::msg::Path OmniPidPursuitController::transformGlobalPlan(
   nav_msgs::msg::Path transformed_plan;
   std::transform(
     transformation_begin, transformation_end, std::back_inserter(transformed_plan.poses),
-    transformGlobalPoseToLocal);
+    transform_global_pose_to_local);
   transformed_plan.header.frame_id = costmap_ros_->getBaseFrameID();
   transformed_plan.header.stamp = robot_pose.header.stamp;
 
@@ -355,7 +348,7 @@ geometry_msgs::msg::Point OmniPidPursuitController::circleSegmentIntersection(
   double dx = x2 - x1;
   double dy = y2 - y1;
   double dr2 = dx * dx + dy * dy;
-  double D = x1 * y2 - x2 * y1;
+  double d = x1 * y2 - x2 * y1;
 
   // Augmentation to only return point within segment
   double d1 = x1 * x1 + y1 * y1;
@@ -363,9 +356,9 @@ geometry_msgs::msg::Point OmniPidPursuitController::circleSegmentIntersection(
   double dd = d2 - d1;
 
   geometry_msgs::msg::Point p;
-  double sqrt_term = std::sqrt(r * r * dr2 - D * D);
-  p.x = (D * dy + std::copysign(1.0, dd) * dx * sqrt_term) / dr2;
-  p.y = (-D * dx + std::copysign(1.0, dd) * dy * sqrt_term) / dr2;
+  double sqrt_term = std::sqrt(r * r * dr2 - d * d);
+  p.x = (d * dy + std::copysign(1.0, dd) * dx * sqrt_term) / dr2;
+  p.y = (-d * dx + std::copysign(1.0, dd) * dy * sqrt_term) / dr2;
   return p;
 }
 
@@ -400,7 +393,7 @@ rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParame
   rcl_interfaces::msg::SetParametersResult result;
   std::lock_guard<std::mutex> lock_reinit(mutex_);
 
-  for (auto parameter : parameters) {
+  for (const auto & parameter : parameters) {
     const auto & type = parameter.get_type();
     const auto & name = parameter.get_name();
 
@@ -509,5 +502,6 @@ void OmniPidPursuitController::applyApproachVelocityScaling(
 }  // namespace pb_omni_pid_pursuit_controller
 
 // Register this controller as a nav2_core plugin
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
   pb_omni_pid_pursuit_controller::OmniPidPursuitController, nav2_core::Controller)

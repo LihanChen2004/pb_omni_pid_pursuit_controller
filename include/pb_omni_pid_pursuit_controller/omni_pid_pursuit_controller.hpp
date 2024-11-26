@@ -1,21 +1,8 @@
 #ifndef NAV2_PURE_PURSUIT_CONTROLLER__REGULATED_PURE_PURSUIT_CONTROLLER_HPP_
 #define NAV2_PURE_PURSUIT_CONTROLLER__REGULATED_PURE_PURSUIT_CONTROLLER_HPP_
 
-#include <algorithm>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <vector>
-
-#include "geometry_msgs/msg/pose2_d.hpp"
 #include "nav2_core/controller.hpp"
-#include "nav2_costmap_2d/footprint_collision_checker.hpp"
-#include "nav2_util/geometry_utils.hpp"
-#include "nav2_util/odometry_utils.hpp"
 #include "pb_omni_pid_pursuit_controller/pid.hpp"
-#include "pluginlib/class_list_macros.hpp"
-#include "pluginlib/class_loader.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 namespace pb_omni_pid_pursuit_controller
 {
@@ -144,8 +131,8 @@ protected:
   rclcpp::Logger logger_{rclcpp::get_logger("OmniPidPursuitController")};
   rclcpp::Clock::SharedPtr clock_;
 
-  std::shared_ptr<PID> move_pid;
-  std::shared_ptr<PID> heading_pid;
+  std::shared_ptr<PID> move_pid_;
+  std::shared_ptr<PID> heading_pid_;
 
   double translation_kp_, translation_ki_, translation_kd_;
   double rotation_kp_, rotation_ki_, rotation_kd_;
