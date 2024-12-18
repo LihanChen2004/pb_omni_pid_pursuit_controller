@@ -124,7 +124,7 @@ void OmniPidPursuitController::configure(
   transform_tolerance_ = tf2::durationFromSec(transform_tolerance);
   control_duration_ = 1.0 / control_frequency;
 
-  global_path_pub_ = node->create_publisher<nav_msgs::msg::Path>("local_plan", 1);
+  local_path_pub_ = node->create_publisher<nav_msgs::msg::Path>("local_plan", 1);
   carrot_pub_ = node->create_publisher<geometry_msgs::msg::PointStamped>("lookahead_point", 1);
 
   move_pid_ = std::make_shared<PID>(
@@ -142,7 +142,7 @@ void OmniPidPursuitController::cleanup()
     "Cleaning up controller: %s of type"
     " pb_omni_pid_pursuit_controller::OmniPidPursuitController",
     plugin_name_.c_str());
-  global_path_pub_.reset();
+  local_path_pub_.reset();
   carrot_pub_.reset();
 }
 
@@ -153,7 +153,7 @@ void OmniPidPursuitController::activate()
     "Activating controller: %s of type "
     "regulated_pure_pursuit_controller::OmniPidPursuitController",
     plugin_name_.c_str());
-  global_path_pub_->on_activate();
+  local_path_pub_->on_activate();
   carrot_pub_->on_activate();
   // Add callback for dynamic parameters
   auto node = node_.lock();
@@ -168,7 +168,7 @@ void OmniPidPursuitController::deactivate()
     "Deactivating controller: %s of type "
     "regulated_pure_pursuit_controller::OmniPidPursuitController",
     plugin_name_.c_str());
-  global_path_pub_->on_deactivate();
+  local_path_pub_->on_deactivate();
   carrot_pub_->on_deactivate();
   dyn_params_handler_.reset();
 }
@@ -207,11 +207,31 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
 
   applyApproachVelocityScaling(transformed_plan, lin_vel);
 
+  // Transform local frame to global frame to use in collision checking
+  nav_msgs::msg::Path map_frame_local_plan;
+
+  int sample_points = 10;
+  int plan_size = transformed_plan.poses.size();
+  for (int i = 0; i < sample_points; ++i) {
+    int index = std::min((i * plan_size) / sample_points, plan_size - 1);
+    geometry_msgs::msg::PoseStamped map_pose;
+    transformPose(global_plan_.header.frame_id, transformed_plan.poses[index], map_pose);
+    map_frame_local_plan.poses.push_back(map_pose);
+  }
+
   geometry_msgs::msg::TwistStamped cmd_vel;
   cmd_vel.header = pose.header;
-  cmd_vel.twist.linear.x = lin_vel * cos(theta_dist);
-  cmd_vel.twist.linear.y = lin_vel * sin(theta_dist);
-  cmd_vel.twist.angular.z = angular_vel;
+  if (!isCollisionDetected(map_frame_local_plan)) {
+    cmd_vel.twist.linear.x = lin_vel * cos(theta_dist);
+    cmd_vel.twist.linear.y = lin_vel * sin(theta_dist);
+    cmd_vel.twist.angular.z = angular_vel;
+  } else {
+    RCLCPP_WARN(logger_, "Collision detected in the trajectory. Stopping the robot.");
+    cmd_vel.twist.linear.x = 0.0;
+    cmd_vel.twist.linear.y = 0.0;
+    cmd_vel.twist.angular.z = 0.0;
+  }
+
   return cmd_vel;
 }
 
@@ -278,7 +298,7 @@ nav_msgs::msg::Path OmniPidPursuitController::transformGlobalPlan(
   // Remove the portion of the global plan that we've already passed so we don't
   // process it on the next iteration (this is called path pruning)
   global_plan_.poses.erase(begin(global_plan_.poses), transformation_begin);
-  global_path_pub_->publish(transformed_plan);
+  local_path_pub_->publish(transformed_plan);
 
   if (transformed_plan.poses.empty()) {
     throw nav2_core::PlannerException("Resulting plan has 0 poses in it.");
@@ -379,10 +399,30 @@ bool OmniPidPursuitController::transformPose(
 
   try {
     tf_->transform(in_pose, out_pose, frame, transform_tolerance_);
-    out_pose.header.frame_id = frame;
     return true;
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(logger_, "Exception in transformPose: %s", ex.what());
+  }
+  return false;
+}
+
+bool OmniPidPursuitController::isCollisionDetected(const nav_msgs::msg::Path & path)
+{
+  auto costmap = costmap_ros_->getCostmap();
+  for (const auto & pose_stamped : path.poses) {
+    const auto & pose = pose_stamped.pose;
+    unsigned int mx, my;
+    if (costmap->worldToMap(pose.position.x, pose.position.y, mx, my)) {
+      if (costmap->getCost(mx, my) >= nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
+        return true;
+      }
+    } else {
+      // RCLCPP_WARN(
+      //   logger_,
+      //   "The Local path is not in the costmap. Cannot check for collisions. "
+      //   "Proceed at your own risk, slow the robot, or increase your costmap size.");
+      return false;
+    }
   }
   return false;
 }

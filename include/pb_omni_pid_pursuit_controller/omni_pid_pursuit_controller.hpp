@@ -123,6 +123,8 @@ protected:
 
   void applyApproachVelocityScaling(const nav_msgs::msg::Path & path, double & linear_vel) const;
 
+  bool isCollisionDetected(const nav_msgs::msg::Path & path);
+
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
   std::shared_ptr<tf2_ros::Buffer> tf_;
   std::string plugin_name_;
@@ -156,7 +158,7 @@ protected:
   tf2::Duration transform_tolerance_;
 
   nav_msgs::msg::Path global_plan_;
-  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>> global_path_pub_;
+  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>> local_path_pub_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PointStamped>>
     carrot_pub_;
 
