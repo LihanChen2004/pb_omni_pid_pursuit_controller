@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Lihan Chen
+// Licensed under the MIT License.
+
 #include "pb_omni_pid_pursuit_controller/omni_pid_pursuit_controller.hpp"
 
 #include "nav2_core/exceptions.hpp"

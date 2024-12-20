@@ -1,5 +1,8 @@
-#ifndef NAV2_PURE_PURSUIT_CONTROLLER__REGULATED_PURE_PURSUIT_CONTROLLER_HPP_
-#define NAV2_PURE_PURSUIT_CONTROLLER__REGULATED_PURE_PURSUIT_CONTROLLER_HPP_
+// Copyright (c) 2024 Lihan Chen
+// Licensed under the MIT License.
+
+#ifndef PB_OMNI_PID_PURSUIT_CONTROLLER__OMNI_PID_PURSUIT_CONTROLLER_HPP_
+#define PB_OMNI_PID_PURSUIT_CONTROLLER__OMNI_PID_PURSUIT_CONTROLLER_HPP_
 
 #include "nav2_core/controller.hpp"
 #include "pb_omni_pid_pursuit_controller/pid.hpp"
@@ -15,12 +18,12 @@ class OmniPidPursuitController : public nav2_core::Controller
 {
 public:
   /**
-   * @brief Constructor for nav2_regulated_pure_pursuit_controller::OmniPidPursuitController
+   * @brief Constructor for pb_omni_pid_pursuit_controller::OmniPidPursuitController
    */
   OmniPidPursuitController() = default;
 
   /**
-   * @brief Destrructor for nav2_regulated_pure_pursuit_controller::OmniPidPursuitController
+   * @brief Destrructor for pb_omni_pid_pursuit_controller::OmniPidPursuitController
    */
   ~OmniPidPursuitController() override = default;
 
@@ -169,4 +172,4 @@ protected:
 
 }  // namespace pb_omni_pid_pursuit_controller
 
-#endif  // NAV2_REGULATED_PURE_PURSUIT_CONTROLLER__REGULATED_PURE_PURSUIT_CONTROLLER_HPP_
+#endif  // pb_omni_pid_pursuit_controller__OMNI_PID_PURSUIT_CONTROLLER_HPP_

@@ -1,12 +1,10 @@
+// Copyright (c) 2024 Lihan Chen
+// Licensed under the MIT License.
+
 #ifndef _PID_SOURCE_
 #define _PID_SOURCE_
 
 #include "pb_omni_pid_pursuit_controller/pid.hpp"
-
-#include <cmath>
-#include <iostream>
-
-using namespace std;
 
 class PIDImpl
 {
