@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(pb_omni_pid_pursuit_controller)
 
-find_package (ament_cmake_auto REQUIRED) 
-ament_auto_find_build_dependencies ()
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/omni_pid_pursuit_controller.cpp
