@@ -1,5 +1,8 @@
 # PolarBear Omni PID Pursuit Controller
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Build](https://github.com/LihanChen2004/pb_omni_pid_pursuit_controller/actions/workflows/ci.yml/badge.svg)](https://github.com/LihanChen2004/pb2025_sentry_nav/actions/workflows/ci.yml)
+
 ## Configuration
 
 | Parameter | Description |
