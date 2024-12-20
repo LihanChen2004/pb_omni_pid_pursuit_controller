@@ -1,28 +1,34 @@
 // Copyright (c) 2024 Lihan Chen
 // Licensed under the MIT License.
 
-#ifndef _PID_H_
-#define _PID_H_
+#ifndef PB_OMNI_PID_PURSUIT_CONTROLLER__PID_HPP_
+#define PB_OMNI_PID_PURSUIT_CONTROLLER__PID_HPP_
 
-class PIDImpl;
 class PID
 {
 public:
-  // Kp -  proportional gain
-  // Ki -  Integral gain
-  // Kd -  derivative gain
+  // kp -  proportional gain
+  // ki -  Integral gain
+  // kd -  derivative gain
   // dt -  loop interval time
   // max - maximum value of manipulated variable
   // min - minimum value of manipulated variable
-  PID(double dt, double max, double min, double Kp, double Kd, double Ki);
+  PID(double dt, double max, double min, double kp, double kd, double ki);
 
-  // Returns the manipulated variable given a setpoint and current process value
-  double calculate(double setpoint, double pv);
-  void setsumerror(double sum_error);
+  // Returns the manipulated variable given a set_point and current process value
+  double calculate(double set_point, double pv);
+  void setSumError(double sum_error);
   ~PID();
 
 private:
-  PIDImpl * pimpl;
+  double dt_;
+  double max_;
+  double min_;
+  double kp_;
+  double kd_;
+  double ki_;
+  double pre_error_;
+  double integral_;
 };
 
-#endif
+#endif  // PB_OMNI_PID_PURSUIT_CONTROLLER__PID_HPP_
