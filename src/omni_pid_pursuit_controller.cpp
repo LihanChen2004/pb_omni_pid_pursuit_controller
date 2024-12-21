@@ -211,20 +211,20 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
   applyApproachVelocityScaling(transformed_plan, lin_vel);
 
   // Transform local frame to global frame to use in collision checking
-  nav_msgs::msg::Path map_frame_local_plan;
+  nav_msgs::msg::Path costmap_frame_local_plan;
 
   int sample_points = 10;
   int plan_size = transformed_plan.poses.size();
   for (int i = 0; i < sample_points; ++i) {
     int index = std::min((i * plan_size) / sample_points, plan_size - 1);
     geometry_msgs::msg::PoseStamped map_pose;
-    transformPose(global_plan_.header.frame_id, transformed_plan.poses[index], map_pose);
-    map_frame_local_plan.poses.push_back(map_pose);
+    transformPose(costmap_ros_->getGlobalFrameID(), transformed_plan.poses[index], map_pose);
+    costmap_frame_local_plan.poses.push_back(map_pose);
   }
 
   geometry_msgs::msg::TwistStamped cmd_vel;
   cmd_vel.header = pose.header;
-  if (!isCollisionDetected(map_frame_local_plan)) {
+  if (!isCollisionDetected(costmap_frame_local_plan)) {
     cmd_vel.twist.linear.x = lin_vel * cos(theta_dist);
     cmd_vel.twist.linear.y = lin_vel * sin(theta_dist);
     cmd_vel.twist.angular.z = angular_vel;
